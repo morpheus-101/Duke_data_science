@@ -1,0 +1,318 @@
+---
+title: "Statistical inference with the GSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+
+### Statistical inference project by Rishikesh Baban Dhayarkar
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+```
+
+### Load data
+
+```{r load-data}
+load("gss.Rdata")
+```
+
+
+
+* * *
+
+## Part 1: Data
+
+The [General Social Survey (GSS)](http://gss.norc.org/) is a sociological survey used to collect information and keep a historical record of the concerns, experiences, attitudes, and practices of residents of the United States.
+
+GSS questions cover a diverse range of issues including national spending priorities, marijuana use, crime and punishment, race relations, quality of life, confidence in institutions, and sexual behavior.
+
+The dataset used for this project is an extract of the General Social Survey (GSS) Cumulative File 1972-2012.
+
+The GSS is a survey is conducted through in-person interview of randomly selected adults from noninstitutionalized population of 18 years of age or older in US. The survey has been contacted every year since 1972 (with few exceptions).
+
+The survey could have some biases for example due to the fact that it requires about 90 minutes to finish, therefore some people who do not have enough time might refuse to answer or not finish it. The survey is also voluntary and therefore it is biased toward people who had time and willingness to conduct the survey.
+
+This dataset includes 57061 observations across 114 variables.
+
+Data collection for the GSS was conducted through (i) computer-assisted personal interviews, (ii) face-to-face interviews, and 
+(iii) telephone interviews. For the 2012 GSS data, the cases were a sample of all English and Spanish speaking people age 18 and over who were 
+living in households at the time of the survey (or non-institutionalised) in the US. 
+A description on the "SAMPLING DESIGN & WEIGHTING" can be found on Page 2867 / 2868 in the 
+[GSS Codebook](http://www.icpsr.umich.edu/cgi-bin/file?comp=none&study=34802&ds=1&file_id=1136502&path=ICPSR).
+
+<h4><b>Generalizability</b></h4>
+
+Here the population of interest is the working United States population. As full probability sampling was conducted, the findings can be generalised to the entire working US population. Potential sources of bias may arise given that the GSS 2012 did not sample from (i) minors and (ii) people who do not speak either English and Spanish.
+Therefore, the biases in the 2012 GSS will have a negligible impact on the generalizability of this study.
+
+<h4><b>Causality</b></h4>
+
+The sample data should allow us to generalize to the population of interest. It is a survey of 57061 U.S adults aged 18 years or older. The survey is based on random sampling. However, there is no causation can be established as GSS is an observation study that can only establish correlation/association between variables. In addition, potential biases are associated with non-response because this is a voluntary in-person survey that takes approximately 90 minutes. Some potential respondents may choose not to participate.
+
+
+# Create a subset of the analysed data, which might be interesting for the research questions
+For the puposes for my research question, I first create 3 subsets of data which include the variables of 'natheal: Improving and protecting nation's health. (Spending towards national health issues)' and 'coninc (current income of the observation)'. This is done for easy handling of data and to make this clear and simple for the exploratory data analysis phase. 
+
+For the puposes of my research I consider observations pertainig to 3 specific years, which are almost equidistant. This done in order to analyse if there is a variation in the relationship between 'natheal' and 'coninc' accross the years.   
+
+```{r}
+
+gss.2012.na <- subset(gss, year == 2012, select = c(natheal, coninc))
+gss.2012 <- gss.2012.na[complete.cases(gss.2012.na), ]
+
+gss.1978.na <- subset(gss, year == 1978, select = c(natheal, coninc))
+gss.1978 <- gss.1978.na[complete.cases(gss.1978.na), ]
+
+gss.1996.na <- subset(gss, year == 1996, select = c(natheal, coninc))
+gss.1996 <- gss.1996.na[complete.cases(gss.1996.na), ]
+
+```
+
+
+* * *
+
+## Part 2: Research question
+
+Reasearch question--> Is there a relationship between the current income and the varibles under social problem spending, variable such as natheal: Improving and protecting nation's health.
+This is interesting to me for the following reason: Most of us have come accross people who often say that they would love to spend money on social charities and causes once they attain enough wealth. Is this statement true ?
+
+Logic tells us that wealthier the person more will be his/her contribution towards the society interms of the money spent on social issues.
+
+There are a lot of rich people who spend money on extravagant things but not social causes and there are a lot of people with limited means who still make an effort to do their bit towards their society. 
+
+So, what is the actual pattern of spending of spending towards national social issues like national health?
+Do people really contribute towards social causes once they attain enough wealth or is it just a statement that people make to feel better about themselves.
+
+My research question is aimed towards answering this question. 
+
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+```{r}
+summary(gss.2012$natheal)
+summary(gss.1996$natheal)
+summary(gss.1978$natheal)
+
+prop.table(summary(gss.2012$natheal))
+prop.table(summary(gss.1996$natheal))
+prop.table(summary(gss.1978$natheal))
+
+```
+
+By running the above commands we can see that 
+
+for the year 2012 - 
+545 people spent too little --> 63% of people in the 2012 data set
+230 people spent about right --> 26.5% of people in the 2012 data set
+90 people spent too much --> 10.5% of people in the 2012 data set
+
+for the year 1996 - 
+838 people spent too little --> 68.75% of people in the 1996 data set
+281 people spent about right --> 23% of people in the 1996 data set
+100 people spent too much --> 8.25% of people in the 1996 data set
+
+for the year 1978 - 
+797 people spent too little --> 57.9% of people in the 1978 data set
+481 people spent about right --> 34.9% of people in the 1978 data set
+98 people spent too much --> 7.2% of people in the 1978 data set
+
+
+
+<h4><b>Summary, density distribution of current income in 2012 and box plot of income v/s spending towards national health issues</b></h4> 
+
+```{r}
+summary(gss.2012$coninc)
+g <- ggplot(gss.2012, aes(coninc))
+
+g + geom_density() + labs(title = "Distribution of income in 2012") + labs(x = "Total income", y = "Density")
+
+
+# boxplot of income vs spending towards national health
+ggplot(gss.2012, aes(factor(gss.2012$natheal), gss.2012$coninc, fill = natheal, alpha = 0.8)) + 
+  geom_boxplot() +
+  ggtitle('Total income by spending towards national health level') +
+  xlab('Spending towards national health') + ylab('Total income') +
+  scale_fill_brewer(name = "Spending towards national health")
+
+```
+
+
+<h4><b>Summary, density distribution of current income in 1996 and box plot of income v/s spending towards national health issues</b></h4> 
+
+```{r}
+summary(gss.1996$coninc)
+g <- ggplot(gss.1996, aes(coninc))
+
+g + geom_density() + labs(title = "Distribution of income in 1996") + labs(x = "Total income", y = "Density")
+
+
+# boxplot of income vs spending towards national health
+ggplot(gss.1996, aes(factor(gss.1996$natheal), gss.1996$coninc, fill = natheal, alpha = 0.8)) + 
+  geom_boxplot() +
+  ggtitle('Total income by spending towards national health level') +
+  xlab('Spending towards national health') + ylab('Total income') +
+  scale_fill_brewer(name = "Spending towards national health")
+
+```
+
+
+<h4><b>Summary, density distribution of current income in 1978 and box plot of income v/s spending towards national health issues</b></h4> 
+
+```{r}
+summary(gss.1978$coninc)
+g <- ggplot(gss.1978, aes(coninc))
+
+g + geom_density() + labs(title = "Distribution of income in 1978") + labs(x = "Total income", y = "Density")
+
+
+# boxplot of income vs spending towards national health
+ggplot(gss.1978, aes(factor(gss.1978$natheal), gss.1978$coninc, fill = natheal, alpha = 0.8)) + 
+  geom_boxplot() +
+  ggtitle('Total income by spending towards national health level') +
+  xlab('Spending towards national health') + ylab('Total income') +
+  scale_fill_brewer(name = "Spending towards national health")
+
+```
+
+
+<h4><b>Density distribution of current income v/s spending towards national health issues for 2012</b></h4> 
+
+```{r}
+g <- ggplot(gss.2012, aes(coninc, fill = natheal))
+g + geom_density (alpha = 0.2) + labs(title = "Income distributions across different spending levels") + labs(x = "Total income", y = "Density")
+```
+<h4><b>Density distribution of current income v/s spending towards national health issues for 1996</b></h4> 
+
+```{r}
+g <- ggplot(gss.1996, aes(coninc, fill = natheal))
+g + geom_density (alpha = 0.2) + labs(title = "Income distributions across different spending levels") + labs(x = "Total income", y = "Density")
+```
+
+<h4><b>Density distribution of current income v/s spending towards national health issues for 1978</b></h4> 
+
+```{r}
+g <- ggplot(gss.1978, aes(coninc, fill = natheal))
+g + geom_density (alpha = 0.2) + labs(title = "Income distributions across different spending levels") + labs(x = "Total income", y = "Density")
+```
+
+
+The overlapping distribution plots indicate at that a strong relationship exists between spending towards national health issues and income.
+
+
+* * *
+
+## Part 4: Inference
+
+<b>Null Hypothesis H<sub>0</sub></b>: The mean income is the same across all levels of spending over national health.<br> 
+<b>Alternative Hypothesis H<sub>A</sub></b>: At least one pair of mean incomes are different from each other.
+
+<b>H<sub>0</sub></b>: µ<sub>1</sub> = µ<sub>2</sub> = µ<sub>3</sub>
+
+<b>H<sub>A</sub></b>:there are not all equal to each other
+
+We are going to perform ANOVA on this dataset.
+
+```{r}
+qqnorm(gss.2012$coninc[gss.2012$natheal == "Too Little"], main = "Too little", col = 'blue')
+qqline(gss.2012$coninc[gss.2012$natheal == "Too Little"], col = 'red')
+qqnorm(gss.2012$coninc[gss.2012$natheal == "About Right"], main = "About Right", col = 'darkgreen')
+qqline(gss.2012$coninc[gss.2012$natheal == "About Right"], col = 'red')
+qqnorm(gss.2012$coninc[gss.2012$natheal == "Too Much"], main = "Too Much", col = 'orange')
+qqline(gss.2012$coninc[gss.2012$natheal == "Too Much"], col = 'red')
+
+
+inference(y = coninc, x = natheal, data = gss.2012, statistic = "mean", type = "ht", null = 0, alternative = "greater", method = "theoretical")
+
+```
+
+<h4>Repeating the same procedure for the years 1996 and 1978</h4>
+
+```{r}
+qqnorm(gss.1996$coninc[gss.1996$natheal == "Too Little"], main = "Too little", col = 'blue')
+qqline(gss.1996$coninc[gss.1996$natheal == "Too Little"], col = 'red')
+qqnorm(gss.1996$coninc[gss.1996$natheal == "About Right"], main = "About Right", col = 'darkgreen')
+qqline(gss.1996$coninc[gss.1996$natheal == "About Right"], col = 'red')
+qqnorm(gss.1996$coninc[gss.1996$natheal == "Too Much"], main = "Too Much", col = 'orange')
+qqline(gss.1996$coninc[gss.1996$natheal == "Too Much"], col = 'red')
+
+
+inference(y = coninc, x = natheal, data = gss.1996, statistic = "mean", type = "ht", null = 0, alternative = "greater", method = "theoretical")
+
+```
+
+
+```{r}
+qqnorm(gss.1978$coninc[gss.1978$natheal == "Too Little"], main = "Too little", col = 'blue')
+qqline(gss.1978$coninc[gss.1978$natheal == "Too Little"], col = 'red')
+qqnorm(gss.1978$coninc[gss.1978$natheal == "About Right"], main = "About Right", col = 'darkgreen')
+qqline(gss.1978$coninc[gss.1978$natheal == "About Right"], col = 'red')
+qqnorm(gss.1978$coninc[gss.1978$natheal == "Too Much"], main = "Too Much", col = 'orange')
+qqline(gss.1978$coninc[gss.1978$natheal == "Too Much"], col = 'red')
+
+
+inference(y = coninc, x = natheal, data = gss.1978, statistic = "mean", type = "ht", null = 0, alternative = "greater", method = "theoretical")
+
+```
+
+
+<h4>What does this inference mean ?</h4>
+
+<h4>For 2012 data</h4>
+```{r}
+pf(18.5999, 2, 864, lower.tail = FALSE)
+```
+F = 18.5999, p-value = 1.23375e-08  
+
+In this case we reject the null hypothesis and favout the alternate hypothesis. The mean income is the same across all levels of spending over national health is false. There is a relationship between the income levels of people and the amount of money they spend on national health issues. Infact the realtionship is a positive one, this can be observed from the graphs and the box plots. 
+
+In conclusion, it is fair to say that people who earn more do infact spend more on national health issues. 
+
+<h4>For 1996 data</h4>
+```{r}
+pf(2.8297, 2, 1216, lower.tail = FALSE)
+```
+F = 2.8297, p-value = 0.05941934 = 5.9%
+
+In this case we do not reject the null hypothesis, considering alpha as 5%.  
+The mean income is the same across all levels of spending over national health is true. So we do not reject the null hypothesis. The data for 1996 seems to have no positive relationship between the income levels of people and the amount of money they spend on national health issues.
+
+So, we cannot positively infer that people who earn more spend more on national health issues. That is even people with limited means contribute towards the society.
+
+
+<h4>For 1978 data</h4>
+```{r}
+pf(2.2588, 2, 1373, lower.tail = FALSE)
+```
+F = 2.2588, p-value = 0.1048639 = 10.4%
+
+In this case we do not reject the null hypothesis, considering alpha as 5%.  
+The mean income is the same across all levels of spending over national health is true. So we do not reject the null hypothesis. The data for 1996 seems to have no positive relationship between the income levels of people and the amount of money they spend on national health issues.
+
+So, we cannot positively infer that people who earn more spend more on national health issues. That is even people with limited means contribute towards the society.
+
+From the above 3 cases, we can see that people from 2012 are less willing to spend money on national health issues and people from 1996, 1978 are more willing to spend money on national health issues.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
