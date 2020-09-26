@@ -1,0 +1,434 @@
+---
+title: "Exploring the BRFSS data"
+output: 
+  html_document: 
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+---
+<h3>Data analysis by Rishikesh Dhayarkar</h3>
+<h2>About Behavioral Risk Factor Surveillance System </h2>
+
+The Behavioral Risk Factor Surveillance System (BRFSS) is a collaborative project between all of the states in the United States (US) and participating US territories and the Centers for Disease Control and Prevention (CDC). The BRFSS is administered and supported by CDC's Population Health Surveillance Branch, under the Division of Population Health at the National Center for Chronic Disease Prevention and Health Promotion. BRFSS is an ongoing surveillance system designed to measure behavioral risk factors for the non-institutionalized adult population (18 years of age and older) residing in the US. 
+
+The BRFSS objective is to collect uniform, state-specific data on preventive health practices and risk behaviors that are linked to chronic diseases, injuries, and preventable infectious diseases that affect the adult population. Factors assessed by the BRFSS in 2013 include tobacco use, HIV/AIDS knowledge and prevention, exercise, immunization, health status, healthy days — health-related quality of life, health care access, inadequate sleep, hypertension awareness, cholesterol awareness, chronic health conditions, alcohol consumption, fruits and vegetables consumption, arthritis burden, and seatbelt use. 
+
+
+## Setup
+
+Generalizability:
+
+The sample data should allow us to generalize to the population of interest. It is a survey of 491,775 U.S. adults aged 18 years or older. It is based on a large stratified random sample. Potential biases are associated with non-response, incomplete interviews, missing values and convenience bias (some potential respondents may not have been included because they do not have a landline and cell phone).
+ 
+Causality:
+
+There is no causation can be established as BRFSS is an observation study that can only establish correlation/association between variables. 
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)        #Library to create plots
+library(corrplot)       #Library to create correlation plot
+library(dplyr)          #Data Manipulation
+```
+
+### Load data
+
+
+```{r load-data}
+load("brfss2013.RData")
+```
+
+
+
+* * *
+
+## Part 1: Data
+
+The Behavioral Risk Factor Surveillance System (BRFSS) is an annual telephone survey in the United States. The BRFSS is designed to identify so-called risk factors in the adult population and report emerging trends. For example, respondents are asked about their diet and weekly physical activity, their HIV/AIDS status, possible tobacco use, immunization, health status, healthy days - health-related quality of life, health care access, inadequate sleep, hypertension awareness, cholesterol awareness, chronic health conditions, alcohol consumption, fruits and vegetables consumption, arthritis burden, and seatbelt use etc.
+
+### Data Collection:
+
+Data collection procedure is explained in [brfss_codebook]( https://d3c33hcgiwev3.cloudfront.net/_e34476fda339107329fc316d1f98e042_brfss_codebook.html?Expires=1494288000&Signature=RuCtQECi5hYrD999rLNfP4Vp3wIxf3qxs-egVp6zbTdoKbF-ob~Gw3F767Isf84f2xFMy2etvZ--2Z7FxCSpK0c~IdzUkUIq7EsUiuARi-qgv5tLnUYXKpbLhPXH9rmh8xV4MF~CNQ2FyHmyArTsQ3vSp1IpHYx1ypJ9ayDSZAc_&Key-Pair-Id=APKAJLTNE6QMUY6HBC5A). The data were collected from United States' all 50 states, the District of Columbia, Puerto Rico, Guam and American Samoa, Federated States of Micronesia, and Palau, by conducting both landline telephone- and cellular telephone-based surveys. Disproportionate stratified sampling (DSS) has been used for the landline sample and the cellular telephone respondents are randomly selected with each having equal probability of selection. The dataset we are working on contains 330 variables for a total of 491, 775 samples in 2013. The missing values denoted by "NA".   
+
+### Generalizability:
+
+The sample data should allow us to generalize to the population of interest. It is a survey of 491,775 U.S. adults aged 18 years or older. It is based on a large stratified random sample. Potential biases are associated with non-response, incomplete interviews, missing values and convenience bias (some potential respondents may not have been included because they do not have a landline and cell phone).
+ 
+### Causality:
+
+There is no causation can be established as BRFSS is an observation study that can only establish correlation/association between variables. 
+
+* * *
+
+## Part 2: Research questions
+
+**Research question 1:**
+The purpose of my first research question is to focus on the general health of the US population for the year 2013 and how it relates with the geography of the US. It consists of 2 sub questions.
+
+The population of US in the year 2013 was 316,234,505. Out of which 27% percent were individuals below the age of 18 and 77% were above the age of 18. Since the BRFSS dataset is a survey that is conducted on the adult population of the US, we consider 77% percent of 316,234,505, which is equal to 242,660,171. 
+This data was obtained from "Kids count data center". 
+
+Refer this link for info on the population the US in 2013. https://datacenter.kidscount.org/data/tables/99-total-population-by-child-and-adult#detailed/1/any/false/871,870,573,869,36,868,867,133,38,35/39,40,41/416,417
+
+1) What is the distribution of US population(2013) with respect to different BMI categories(Underweight, Normal weight, Overweight, Obese) ?
+
+2) How do 50 states of the US rank in terms of the number of Underweight, Normal weight, Overweight, and Obese people ? 
+
+**Research question 2:**
+
+My second research question is based around the general health of the people. 
+Here I consider different parameters that affect the general health of a person. 
+Consists of 4 sub questions
+
+1) Relationship between general health and smoking 
+
+2) Relationship between general health and excercise 
+
+3) Relationship between general health and 'Ever Diagnosed With Heart Attack' 
+
+4) Relationship between general health and '(Ever Told) You Have Kidney Disease'
+
+5) Relationship between general health and '(Ever Told) You Have Diabetes' 
+
+
+**Research question 3:**
+
+My third research question focuses on the physcical activity of a person.
+
+1) Which gender excercises more in the US according to this data? Male or Female?
+
+2) What is the relationship between physical excercise and the general health of a person?
+
+3) What is the relationship between physical excercise and bmi of a person ?
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+
+**Research quesion 1:**
+
+1) What is the distribution of US popultion(2013) with respect to different BMI categories(Underweight, Normal weight, Overweight, Obese) ?
+
+Solution to part 1 of research question 1.
+
+```{r}
+# A variable for storing the 2013 adult population of the US
+US_Population_2013_adult <- 242660171
+
+# creation of dataset for research question 1
+Col <- c('X_state', 'X_bmi5', 'X_bmi5cat')
+data_bmi <- brfss2013[, Col]
+
+Col <- c('X_state', 'genhlth', 'hlthpln1', 'X_bmi5cat', 'exerany2')
+data_genhlth_state_bmi <- brfss2013[, Col]
+
+#removal of rows with missing data(NA)
+data_genhlth_state_bmi <- data_genhlth_state_bmi[complete.cases(data_genhlth_state_bmi),]
+
+#Now we calculate the percentage of US population with respect to the different BMI categories
+bmi_categories <- plyr::count(data_genhlth_state_bmi, 'X_bmi5cat')
+bmi_categories <- bmi_categories[-5,]
+bmi_categories$percent <- prop.table(bmi_categories$freq)
+bmi_categories$population <- lapply(bmi_categories$percent, function(x) {
+     US_Population_2013_adult * x })
+
+# creating plots for the processed data
+ggplot(bmi_categories, aes(x = factor(X_bmi5cat), y = percent, fill = percent, alpha = 0.8)) +
+     geom_bar(stat = 'identity') +
+     xlab('BMI Categories') + ylab('Percentage of US population') +
+     ggtitle('Distribution of 2013 US population(adults) with respect to \nBMI categories') +
+     geom_text(aes(label = round(percent * 100, 2)), vjust = 1.6, color = 'black', position = position_dodge(0.9), size = 3)
+```
+
+
+<h4>From the above data processing we get the following information:</h4>
+
+1) Underweight people comprise of 1.74% of the entire population = 4,233,816 people
+
+2) Normalweight people comprise of 33.15% of the entire population = 80,436,349 people
+
+3) Overweight people comprise of 35.92% of the entire population  = 87,160,580 people
+
+4) Obese people comprise of 29.19% of the entire population = 70,829,424 people
+
+This end of part 1 of research question 1.
+
+
+2) How do 50 states of the US rank in terms of the number of Underweight, Overweight, and Obese people ? 
+
+Solution to part 2 of research question 1.
+
+```{r}
+
+# PROCESSING FOR OBESE PEOPLE
+
+# remove the rows with missing values
+data_bmi <- data_bmi[complete.cases(data_bmi),]
+
+#calculating the population for every state
+population_State <- plyr::count(data_bmi, 'X_state')
+
+#changing the "freq" column name to Sample
+colnames(population_State) <- c('X_state', 'Sample')
+
+#filtering for obese people
+filtered_Obese_people <- subset(data_bmi, data_bmi$X_bmi5cat == 'Obese')
+
+#calculating obese people per state
+obese_people_per_State <- plyr::count(filtered_Obese_people, 'X_state')
+colnames(obese_people_per_State) <- c('X_state', 'Obese')
+
+#combining data
+population_State <- merge(population_State, obese_people_per_State)
+
+#calculating the percentage of obese people 
+population_State$Percent <- with(population_State, round(Obese * 100 / Sample, 2))
+
+#ordering of the percentages
+population_State_ordered <- population_State[order( - population_State$Percent),]
+
+#making sample and obese to null for simplification
+population_State_ordered$Sample <- NULL
+population_State_ordered$Obese <- NULL
+population_State_ordered <- filter(population_State_ordered, Percent > 1) %>% top_n(53)
+
+#creating the new variables for the top 10 obese states and the bottom 10 obese states
+population_State_ordered_top <- filter(population_State_ordered, Percent > 1) %>% top_n(10)
+population_State_ordered_btm <- tail(population_State_ordered, n=10)
+
+#plotting these 2 variables
+ggplot(population_State_ordered_top, aes(x=X_state, y=Percent, fill=Percent)) +geom_bar(stat="identity")+theme_minimal()+xlab("State") + ylab("% of population Obese")+ggtitle("Top 10 States with highest obesity rates in 2013")
+
+ggplot(population_State_ordered_btm, aes(x=X_state, y=Percent, fill=Percent)) +geom_bar(stat="identity")+theme_minimal()+xlab("State") + ylab("% of population Obese")+ggtitle("Bottom 10 States with least obesity rates in 2013")
+
+
+```
+
+
+```{r}
+# PROCESSING FOR OVERWEIGHT PEOPLE
+
+# remove the rows with missing values
+data_bmi <- data_bmi[complete.cases(data_bmi),]
+
+#calculating the population for every state
+population_State <- plyr::count(data_bmi, 'X_state')
+
+#changing the "freq" column name to Sample
+colnames(population_State) <- c('X_state', 'Sample')
+
+#filtering for Overweight people
+filtered_Overweight_people <- subset(data_bmi, data_bmi$X_bmi5cat == 'Overweight')
+
+#calculating Overweight people per state
+Overweight_people_per_State <- plyr::count(filtered_Overweight_people, 'X_state')
+colnames(Overweight_people_per_State) <- c('X_state', 'Overweight')
+
+#combining data
+population_State <- merge(population_State, Overweight_people_per_State)
+
+#calculating the percentage of Overweight people 
+population_State$Percent <- with(population_State, round(Overweight * 100 / Sample, 2))
+
+#ordering of the percentages
+population_State_ordered <- population_State[order( - population_State$Percent),]
+
+#making sample and Overweight to null for simplification
+population_State_ordered$Sample <- NULL
+population_State_ordered$Overweight <- NULL
+population_State_ordered <- filter(population_State_ordered, Percent > 1) %>% top_n(53)
+
+#creating the new variables for the top 10 Overweight states and the bottom 10 Overweight states
+population_State_ordered_top <- filter(population_State_ordered, Percent > 1) %>% top_n(10)
+population_State_ordered_btm <- tail(population_State_ordered, n=10)
+
+#plotting these 2 variables
+ggplot(population_State_ordered_top, aes(x=X_state, y=Percent, fill=Percent)) +geom_bar(stat="identity")+theme_minimal()+xlab("State") + ylab("% of population Overweight")+ggtitle("Top 10 States with highest Overweight rates in 2013")
+
+ggplot(population_State_ordered_btm, aes(x=X_state, y=Percent, fill=Percent)) +geom_bar(stat="identity")+theme_minimal()+xlab("State") + ylab("% of population Overweight")+ggtitle("Bottom 10 States with least Overweight rates in 2013")
+```
+
+
+```{r}
+# PROCESSING FOR UNDER WEIGHT PEOPLE
+
+# remove the rows with missing values
+data_bmi <- data_bmi[complete.cases(data_bmi),]
+
+#calculating the population for every state
+population_State <- plyr::count(data_bmi, 'X_state')
+
+#changing the "freq" column name to Sample
+colnames(population_State) <- c('X_state', 'Sample')
+
+#filtering for Underweight people
+filtered_Underweight_people <- subset(data_bmi, data_bmi$X_bmi5cat == 'Underweight')
+
+#calculating Underweight people per state
+Underweight_people_per_State <- plyr::count(filtered_Underweight_people, 'X_state')
+colnames(Underweight_people_per_State) <- c('X_state', 'Underweight')
+
+#combining data
+population_State <- merge(population_State, Underweight_people_per_State)
+
+#calculating the percentage of Underweight people 
+population_State$Percent <- with(population_State, round(Underweight * 100 / Sample, 2))
+
+#ordering of the percentages
+population_State_ordered <- population_State[order( - population_State$Percent),]
+
+#making sample and Underweight to null for simplification
+population_State_ordered$Sample <- NULL
+population_State_ordered$Overweight <- NULL
+population_State_ordered <- filter(population_State_ordered, Percent > 1) %>% top_n(53)
+
+#creating the new variables for the top 10 Underweight states and the bottom 10 Underweight states
+population_State_ordered_top <- filter(population_State_ordered, Percent > 1) %>% top_n(10)
+population_State_ordered_btm <- tail(population_State_ordered, n=10)
+
+#plotting these 2 variables
+ggplot(population_State_ordered_top, aes(x=X_state, y=Percent, fill=Percent)) +geom_bar(stat="identity")+theme_minimal()+xlab("State") + ylab("% of population Underweight")+ggtitle("Top 10 States with highest Underweight rates in 2013")
+
+ggplot(population_State_ordered_btm, aes(x=X_state, y=Percent, fill=Percent)) +geom_bar(stat="identity")+theme_minimal()+xlab("State") + ylab("% of population Underweight")+ggtitle("Bottom 10 States with least Underweight rates in 2013")
+```
+
+
+
+**Research quesion 2:**
+
+Does smoking affect the general health of a person?
+
+Solution to research question 2
+
+
+```{r}
+#1) Relationship between smoking and general health
+
+Col <- c('genhlth', 'smoke100')
+data_smoke <- brfss2013[, Col]
+data_smoke <- data_smoke[complete.cases(data_smoke),]
+
+smoke <- ggplot(data = data_smoke, aes(x = genhlth, fill = factor(smoke100, levels = c("Yes", "No")))) +  geom_bar(aes(y = ((..count..) * 100 /sum(..count..))))
+
+smoke <- smoke + xlab("General Health Categories") + ylab("number of people(%)") + ggtitle("Relationship between the different categories of general health and smoking habits")
+
+smoke <- smoke + guides(fill = guide_legend(title = "Smoked atleast 100 cigarettes"))
+smoke
+
+```
+
+
+```{r}
+#2) Relationship between general health and excercise
+Col <- c('genhlth', 'exerany2')
+data_exc <- brfss2013[, Col]
+data_exc <- data_exc[complete.cases(data_exc),]
+
+excercise <- ggplot(data = data_exc, aes(x = genhlth, fill = factor(exerany2, levels = c("Yes", "No")))) +  geom_bar(aes(y = ((..count..) * 100 /sum(..count..))))
+
+excercise <- excercise + xlab("General Health Categories") + ylab("number of people(%)") + ggtitle("Relationship between the different categories of general health and excercise habits")
+
+excercise <- excercise + guides(fill = guide_legend(title = "Excercised in the last 30 days"))
+excercise
+
+```
+
+
+```{r}
+# 3) Relationship between general health and 'Ever Diagnosed With Heart Attack' 
+Col <- c('genhlth', 'cvdinfr4')
+data_hrt <- brfss2013[, Col]
+data_hrt <- data_hrt[complete.cases(data_hrt),]
+
+attack <- ggplot(data = data_hrt, aes(x = genhlth, fill = factor(cvdinfr4, levels = c("Yes", "No")))) +  geom_bar(aes(y = ((..count..) * 100 /sum(..count..))))
+
+attack <- attack + xlab("General Health Categories") + ylab("number of people(%)") + ggtitle("Relationship between the different categories of general health and heart attacks")
+
+attack <- attack + guides(fill = guide_legend(title = "Ever experienced a heart attack"))
+attack
+
+```
+
+
+```{r}
+# 4) Relationship between general health and '(Ever Told) You Have Kidney Disease'
+
+Col <- c('genhlth', 'chckidny')
+data_kidney <- brfss2013[, Col]
+data_kidney <- data_kidney[complete.cases(data_kidney),]
+
+kidney <- ggplot(data = data_kidney, aes(x = genhlth, fill = factor(chckidny, levels = c("Yes", "No")))) +  geom_bar(aes(y = ((..count..) * 100 /sum(..count..))))
+
+kidney <- kidney + xlab("General Health Categories") + ylab("number of people(%)") + ggtitle("Relationship between the different categories of general health and kidney problems")
+
+kidney <- kidney + guides(fill = guide_legend(title = "Ever experienced a kidney failure"))
+kidney
+
+```
+
+
+```{r}
+# 5) Relationship between general health and '(Ever Told) You Have Diabetes'
+
+Col <- c('genhlth', 'diabete3')
+data_dia <- brfss2013[, Col]
+data_dia <- data_dia[complete.cases(data_dia),]
+
+diabetes <- ggplot(data = data_dia, aes(x = genhlth, fill = factor(diabete3, levels = c("Yes", "No", "	No, pre-diabetes or borderline diabetes")))) +  geom_bar(aes(y = ((..count..) * 100 /sum(..count..))))
+
+diabetes <- diabetes + xlab("General Health Categories") + ylab("number of people(%)") + ggtitle("Relationship between the different categories of general health and diabetes patients")
+
+diabetes <- diabetes + guides(fill = guide_legend(title = "Ever diagnosed with diabetes"))
+diabetes
+
+```
+
+
+
+**Research quesion 3:**
+
+```{r}
+#1) Which gender excercises more in the US according to this data? Male or Female?
+
+Col <- c('sex', 'exerany2')
+data_sex_health <- brfss2013[, Col]
+data_sex_health <- data_sex_health[complete.cases(data_sex_health),]
+
+mosaicplot( ~ sex + exerany2, data = data_sex_health, xlab = 'sex of the individuals', ylab = 'Physical excercise', color = c('lightblue', 'steelblue'), main = 'Sex of the individuals vs physical excercise')
+
+data_sex_health %>% group_by(sex) %>% summarise(Percentage_Of_Exercisers = (sum(exerany2 == "Yes")/n())*100)
+
+```
+
+
+It sort of appears that females excercise more than males from the mosaic plot. 
+But once we calculate the percentage of people who excercise in both the genders it becomes more evident that the number of males that excercise are more than the number of females.
+
+male - percentage of excercisers = 74.9%
+
+female - percentage of excercisers = 71.1%
+
+
+```{r}
+
+#2) What is the relationship between physical excercise and the general health of a person?
+
+mosaicplot( ~ genhlth + exerany2, data = data_genhlth_state_bmi, xlab = 'General health', ylab = 'Physical excercise', color = c('lightblue', 'steelblue'), main = 'General health vs physical excercise')
+
+```
+
+
+It is evident from the mosiac plot that general health and physical excercise are directly proportional to each other. 
+The more you excercise the better your health will be!
+
+```{r}
+
+#3) What is the relationship between physical excercise and bmi of a person ?
+
+mosaicplot( ~ X_bmi5cat + exerany2, data = data_genhlth_state_bmi, xlab = 'Physical excercise', ylab = 'BMI', color = c('lightblue', 'steelblue'), main = 'Physical excercise vs BMI')
+```
+
+
+From this mosaic plot it is evident that overweight and obese people excercise quite less leading to inferior health, normal weight people excercise just the right amount to stay healthy, underweight people also excercise but less that normal weight people and more than overweight and obese people.
